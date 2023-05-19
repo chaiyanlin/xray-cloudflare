@@ -11,7 +11,7 @@ curl https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output 
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/cloudflare-client.list
 
 apt update && apt install cloudflare-warp -y
-warp-cli register
+echo "Y" | warp-cli register
 warp-cli set-mode proxy
 warp-cli connect
 
