@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 
+# Read password from script parameter
+PASSWORD=$1
+
 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install-geodata
 
-curl https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+curl https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
 
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/cloudflare-client.list
 
-sudo apt update 
-sudo apt install cloudflare-warp
+apt update && apt install cloudflare-warp -y
 warp-cli register
 warp-cli set-mode proxy
 warp-cli connect
@@ -24,7 +26,7 @@ cat > /usr/local/etc/xray/config.json << EOF
             "protocol": "shadowsocks",
             "settings": {
                 "method": "xchacha20-ietf-poly1305",
-                "password": "password"
+                "password": "$PASSWORD"
             }
         }
     ],
@@ -50,14 +52,19 @@ cat > /usr/local/etc/xray/config.json << EOF
         "rules": [
             {
                 "type": "field",
+                "domain": ["chat.openai.com"],
+                "outboundTag": "socks"
+            },
+            {
+                "type": "field",
                 "inboundTag": [
                     "shadowsocks"
                 ],
-                "outboundTag": "socks"
+                "outboundTag": "direct"
             }
         ]
     }
 }
 EOF
 
-sudo systemctl enable xray && sudo systemctl restart xray
+systemctl enable xray && systemctl restart xray
